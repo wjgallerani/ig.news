@@ -1,17 +1,17 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
-import { getPrismicClient } from '../../services/prismic';
-import styles from './styles.module.scss';
+import Link from 'next/link';
 import Prismic from '@prismicio/client';
 import { RichText } from 'prismic-dom';
-import Link from 'next/link';
+import { getPrismicClient } from '../../services/prismic';
+import styles from './styles.module.scss';
 
-interface Post {
+type Post = {
     slug: string;
     title: string;
     excerpt: string;
     updatedAt: string;
-}
+};
 
 interface PostsProps {
     posts: Post[];
@@ -27,11 +27,13 @@ export default function Posts({ posts }: PostsProps) {
             <main className={styles.container}>
                 <div className={styles.posts}>
                     {posts.map(post => (
-                        <Link href={`/posts/${post.slug}`}>
-                            <a key={post.slug} >
+                        <Link key={post.slug} href={`/posts/${post.slug}`}>
+                            <a>
                                 <time>{post.updatedAt}</time>
                                 <strong>{post.title}</strong>
-                                <p>{post.excerpt}</p>
+                                <p>
+                                    {post.excerpt}
+                                </p>
                             </a>
                         </Link>
                     ))}
@@ -45,9 +47,10 @@ export const getStaticProps: GetStaticProps = async () => {
     const prismic = getPrismicClient();
 
     const response = await prismic.query([
-        Prismic.predicates.at('document.type', 'post')
+        Prismic.predicates.at('document.type', 'publication')
     ], {
-        fetch: ['post.title', 'post.content']
+        fetch: ['publication.title', 'publication.content'],
+        pageSize: 100,
     });
 
     const posts = response.results.map(post => {
@@ -58,10 +61,10 @@ export const getStaticProps: GetStaticProps = async () => {
             updatedAt: new Date(post.last_publication_date).toLocaleDateString('pt-BR', {
                 day: '2-digit',
                 month: 'long',
-                year: 'numeric'
+                year: 'numeric',
             })
         }
-    });
+    })
 
     return {
         props: {
